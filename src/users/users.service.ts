@@ -4,6 +4,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
@@ -59,6 +60,14 @@ export class UsersService {
       throw new BadRequestException('File is required');
     }
 
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const oldAvatar = user.avatar;
+
     const ext = path.extname(file.originalname);
     const fileId = `images/${randomUUID()}${ext}`;
 
@@ -74,12 +83,26 @@ export class UsersService {
       { new: true },
     );
 
+    if (oldAvatar) {
+      await this.awsS3Service.deleteFile(oldAvatar);
+    }
+
     return updated;
   }
 
   async removeAvatar(userId: string, requesterId: string) {
     if (userId !== requesterId) {
       throw new ForbiddenException('You can only update your own account');
+    }
+
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.avatar) {
+      await this.awsS3Service.deleteFile(user.avatar);
     }
 
     const updated = await this.userModel.findByIdAndUpdate(
