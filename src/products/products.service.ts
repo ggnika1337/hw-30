@@ -7,10 +7,14 @@ import {
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { IProduct } from './entities/product.entity';
+import path from 'path';
+import { AwsS3Service } from 'src/aws-s3/aws-s3.service';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class ProductsService {
   private products: IProduct[] = [];
+  private awsS3Service: AwsS3Service;
 
   create(dto: CreateProductDto, maker: string) {
     const lastId = this.products[this.products.length - 1]?.id || 0;
@@ -29,6 +33,17 @@ export class ProductsService {
     this.products.push(newProduct);
 
     return newProduct;
+  }
+
+  async uploadImage(file: Express.Multer.File) {
+    const ext = path.extname(file.originalname);
+    const fileId = `images/${randomUUID()}${ext}`;
+
+    return await this.awsS3Service.uploadFile(
+      fileId,
+      file.buffer,
+      file.mimetype,
+    );
   }
 
   findAll(hasDiscount: boolean) {

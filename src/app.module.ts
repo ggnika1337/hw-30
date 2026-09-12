@@ -10,6 +10,7 @@ import dns from 'dns';
 import { AuthModule } from './auth/auth.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { AwsS3Module } from './aws-s3/aws-s3.module';
 
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
@@ -22,6 +23,7 @@ dns.setServers(['8.8.8.8', '8.8.4.4']);
     ExpensesModule,
     ProductsModule,
     AuthModule,
+    AwsS3Module,
   ],
   controllers: [AppController],
   providers: [

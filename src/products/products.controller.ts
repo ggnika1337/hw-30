@@ -8,6 +8,8 @@ import {
   Delete,
   UseGuards,
   Req,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -16,6 +18,7 @@ import { isEmailProvided } from 'src/guards/is-email-provided.guard';
 import { IsAuthGuard } from 'src/guards/isAuth.guard';
 import { UserId } from 'src/users/decorators/user.decorator';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { FileInterceptor } from '@nestjs/platform-express';
 @UseGuards(ThrottlerGuard)
 @Throttle({ default: { limit: 25, ttl: 60000 } })
 @Controller('products')
@@ -32,6 +35,12 @@ export class ProductsController {
   @UseGuards(isEmailProvided)
   findAll(@Req() req) {
     return this.productsService.findAll(req.hasDiscount);
+  }
+
+  @Post('upload-image')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadFile(@UploadedFile() file: Express.Multer.File) {
+    return this.productsService.uploadImage(file);
   }
 
   @Get(':id')
