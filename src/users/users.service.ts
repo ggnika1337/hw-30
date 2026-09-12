@@ -11,12 +11,16 @@ import { UserQuery } from './dtos/userQuery.dto';
 import { User } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { HydratedDocument, Model } from 'mongoose';
+import { randomUUID } from 'crypto';
+import path from 'path';
+import { AwsS3Service } from 'src/aws-s3/aws-s3.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
+    private readonly awsS3Service: AwsS3Service,
   ) {}
 
   async onModuleInit() {
@@ -42,17 +46,25 @@ export class UsersService {
     return includePassword ? query.select('password') : query;
   }
 
-  async changeAvatar(userId, requesterId, avatarUrl) {
+  async changeAvatar(userId, requesterId, file: Express.Multer.File) {
+    const ext = path.extname(file.originalname);
+    const fileId = `images/${randomUUID()}${ext}`;
     if (userId !== requesterId) {
       throw new ForbiddenException('You can only update your own account');
     }
 
-    const updated = await this.userModel.findByIdAndUpdate(userId, {
-      avatar: avatarUrl,
-    });
+    const pfp = await this.awsS3Service.uploadFile(
+      fileId,
+      file.buffer,
+      file.mimetype,
+    );
 
-    return updated;
+    const updated = await this.userModel.findByIdAndUpdate(userId, {
+      avatar: pfp,
+    });
   }
+
+  async uploadImage() {}
 
   async createAuthUser({
     fullName,

@@ -7,7 +7,9 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dtos/update-user.dto';
@@ -15,6 +17,7 @@ import { UserQuery } from './dtos/userQuery.dto';
 import { IsAuthGuard } from 'src/guards/isAuth.guard';
 import { UserId } from './decorators/user.decorator';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { FileInterceptor } from '@nestjs/platform-express';
 // @UseGuards(ThrottlerGuard)
 // @Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('users')
@@ -27,11 +30,16 @@ export class UsersController {
     return this.usersService.upgradeSubscription(userId);
   }
 
-  // @Patch('change-avatar')
-  // @UseGuards(IsAuthGuard)
-  // changeAvatar(@UserId() userId: string, @Param('id') id: string) {
-  //   return this.usersService.changeAvatar(id, userId, avatarUrl);
-  // }
+  @Post('change-avatar')
+  @UseGuards(IsAuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  changeAvatar(
+    @UserId() userId: string,
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.usersService.changeAvatar(id, userId, file);
+  }
 
   @Get()
   getUsers(@Query() PaginationDto: UserQuery) {
