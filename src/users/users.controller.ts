@@ -40,6 +40,13 @@ export class UsersController {
   ) {
     return this.usersService.changeAvatar(userId, requesterId, file);
   }
+
+  @Post(':id/remove-avatar')
+  @UseGuards(IsAuthGuard)
+  removeAvatar(@UserId() requesterId: string, @Param('id') userId: string) {
+    return this.usersService.removeAvatar(userId, requesterId);
+  }
+
   @Get()
   getUsers(@Query() PaginationDto: UserQuery) {
     return this.usersService.getUsers(PaginationDto);

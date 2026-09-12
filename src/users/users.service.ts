@@ -77,7 +77,19 @@ export class UsersService {
     return updated;
   }
 
-  async uploadImage() {}
+  async removeAvatar(userId: string, requesterId: string) {
+    if (userId !== requesterId) {
+      throw new ForbiddenException('You can only update your own account');
+    }
+
+    const updated = await this.userModel.findByIdAndUpdate(
+      userId,
+      { avatar: '' },
+      { new: true },
+    );
+
+    return updated;
+  }
 
   async createAuthUser({
     fullName,
