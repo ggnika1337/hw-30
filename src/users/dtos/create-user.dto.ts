@@ -4,6 +4,9 @@ export class CreateUserDto {
   fullName!: string;
 
   @IsString()
+  avatar!: string;
+
+  @IsString()
   email!: string;
 
   @IsString()

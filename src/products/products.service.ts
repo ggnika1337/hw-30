@@ -7,7 +7,6 @@ import {
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { IProduct } from './entities/product.entity';
-import { request } from 'http';
 
 @Injectable()
 export class ProductsService {
@@ -19,6 +18,7 @@ export class ProductsService {
     const newProduct: IProduct = {
       id: lastId + 1,
       name: dto.name,
+      photos: [],
       category: dto.category,
       quantity: dto.quantity,
       price: dto.price,

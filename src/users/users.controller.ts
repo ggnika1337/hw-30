@@ -27,6 +27,12 @@ export class UsersController {
     return this.usersService.upgradeSubscription(userId);
   }
 
+  @Patch('change-avatar')
+  @UseGuards(IsAuthGuard)
+  changeAvatar(@UserId() userId: string, @Param('id') id: string) {
+    return this.usersService.changeAvatar(id, userId, avatarUrl);
+  }
+
   @Get()
   getUsers(@Query() PaginationDto: UserQuery) {
     return this.usersService.getUsers(PaginationDto);

@@ -42,6 +42,18 @@ export class UsersService {
     return includePassword ? query.select('password') : query;
   }
 
+  async changeAvatar(userId, requesterId, avatarUrl) {
+    if (userId !== requesterId) {
+      throw new ForbiddenException('You can only update your own account');
+    }
+
+    const updated = await this.userModel.findByIdAndUpdate(userId, {
+      avatar: avatarUrl,
+    });
+
+    return updated;
+  }
+
   async createAuthUser({
     fullName,
     email,
