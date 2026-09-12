@@ -30,17 +30,16 @@ export class UsersController {
     return this.usersService.upgradeSubscription(userId);
   }
 
-  @Post('change-avatar')
+  @Post(':id/change-avatar')
   @UseGuards(IsAuthGuard)
   @UseInterceptors(FileInterceptor('file'))
   changeAvatar(
-    @UserId() userId: string,
-    @Param('id') id: string,
+    @UserId() requesterId: string,
+    @Param('id') userId: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.usersService.changeAvatar(id, userId, file);
+    return this.usersService.changeAvatar(userId, requesterId, file);
   }
-
   @Get()
   getUsers(@Query() PaginationDto: UserQuery) {
     return this.usersService.getUsers(PaginationDto);

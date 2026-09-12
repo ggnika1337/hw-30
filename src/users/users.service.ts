@@ -46,12 +46,21 @@ export class UsersService {
     return includePassword ? query.select('password') : query;
   }
 
-  async changeAvatar(userId, requesterId, file: Express.Multer.File) {
-    const ext = path.extname(file.originalname);
-    const fileId = `images/${randomUUID()}${ext}`;
+  async changeAvatar(
+    userId: string,
+    requesterId: string,
+    file: Express.Multer.File,
+  ) {
     if (userId !== requesterId) {
       throw new ForbiddenException('You can only update your own account');
     }
+
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
+    const ext = path.extname(file.originalname);
+    const fileId = `images/${randomUUID()}${ext}`;
 
     const pfp = await this.awsS3Service.uploadFile(
       fileId,
@@ -59,9 +68,13 @@ export class UsersService {
       file.mimetype,
     );
 
-    const updated = await this.userModel.findByIdAndUpdate(userId, {
-      avatar: pfp,
-    });
+    const updated = await this.userModel.findByIdAndUpdate(
+      userId,
+      { avatar: pfp },
+      { new: true },
+    );
+
+    return updated;
   }
 
   async uploadImage() {}
