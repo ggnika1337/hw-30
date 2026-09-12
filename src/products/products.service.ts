@@ -14,7 +14,8 @@ import { randomUUID } from 'crypto';
 @Injectable()
 export class ProductsService {
   private products: IProduct[] = [];
-  private awsS3Service: AwsS3Service;
+
+  constructor(private readonly awsS3Service: AwsS3Service) {}
 
   create(dto: CreateProductDto, maker: string) {
     const lastId = this.products[this.products.length - 1]?.id || 0;
@@ -44,6 +45,15 @@ export class ProductsService {
       file.buffer,
       file.mimetype,
     );
+  }
+
+  async uploadMany(files: Express.Multer.File[]) {
+    const uploadedImage: string[] = [];
+    for (let file of files) {
+      const fileId = await this.uploadImage(file);
+      uploadedImage.push(fileId);
+    }
+    return uploadedImage;
   }
 
   findAll(hasDiscount: boolean) {
