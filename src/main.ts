@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,14 +13,22 @@ async function bootstrap() {
       validateCustomDecorators: true,
     }),
   );
+
+  const config = new DocumentBuilder()
+    .setTitle('Auth/Products/Expenses Api')
+    .setDescription('API documentation')
+    .setVersion('1.0')
+    .build();
+
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+
+  SwaggerModule.setup('api', app, documentFactory());
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
 
-// თქვენი დავალება შემდეგია:
+// თქვენი დავალებაა წინა 30 დავალებაზე დაამატოთ Swagger API დოკუმენტაცია ყველა როუტზე.
 
-// 3) პროდუქტებზე იუზერს უნდა შეეძლოს როგორც ერთის ისე რამდენიმე ფოტოს ატვირთვა
-// 4) უნდა შეგეძლოთ ფოტოების წაშლა
-// 5) დააკონფიგურირეთ cloudfront
-
-// უნდა გამოიყენოთ AWS-S3 bucket
+// გამოიყენეთ npm install --save @nestjs/swagger
+// რეფერენსი: https://github.com/Datodia/Gita-backend-3/commit/main
