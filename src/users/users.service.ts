@@ -11,13 +11,16 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserQuery } from './dtos/userQuery.dto';
 import { User } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { HydratedDocument, Model } from 'mongoose';
+import { HydratedDocument, Model, Types } from 'mongoose';
 import { randomUUID } from 'crypto';
 import path from 'path';
 import { AwsS3Service } from 'src/aws-s3/aws-s3.service';
 
 @Injectable()
 export class UsersService {
+  findByIdAndUpdate(_id: Types.ObjectId, arg1: { OTPCode: null; OTPCodeExpirationDate: null; isVerified: boolean; }) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
@@ -120,9 +123,16 @@ export class UsersService {
     age,
     gender,
     password,
-  }: Pick<User, 'fullName' | 'email' | 'age' | 'gender' | 'password'>): Promise<
-    HydratedDocument<User>
-  > {
+  }: Pick<
+    User,
+    | 'fullName'
+    | 'email'
+    | 'age'
+    | 'gender'
+    | 'password'
+    | 'OTPCode'
+    | 'OTPCodeExpirationDate'
+  >): Promise<HydratedDocument<User>> {
     const now = new Date();
     const subEnd = new Date(now);
     subEnd.setMonth(subEnd.getMonth() + 1);

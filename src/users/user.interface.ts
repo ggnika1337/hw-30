@@ -8,7 +8,8 @@ export interface IUser {
   age: number;
   password: string;
   isVerified: boolean;
-  verificationCode: string;
+  OTPCode: string;
+  OTPCodeExpirationDate: number;
 
   subStart: Date;
   subEnd: Date;
