@@ -7,6 +7,8 @@ export interface IUser {
   gender: string;
   age: number;
   password: string;
+  isVerified: boolean;
+  verificationCode: string;
 
   subStart: Date;
   subEnd: Date;

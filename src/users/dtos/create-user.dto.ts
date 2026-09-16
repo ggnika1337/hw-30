@@ -12,6 +12,9 @@ export class CreateUserDto {
   @IsString()
   gender!: string;
 
+  @IsBoolean()
+  isVerified: boolean;
+
   @IsNumber()
   phoneNumber!: number;
 

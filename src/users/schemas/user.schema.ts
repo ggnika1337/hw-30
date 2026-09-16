@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { IsBoolean } from 'class-validator';
 import mongoose, { Types } from 'mongoose';
 
 @Schema({ timestamps: true })
@@ -11,6 +12,12 @@ export class User {
 
   @Prop({ type: String, default: '' })
   avatar!: string;
+
+  @Prop({ type: Boolean, default: false })
+  isVerified: boolean;
+
+  @Prop({ type: String })
+  verificationCode: string;
 
   @Prop({ type: Number })
   phoneNumber!: number;
