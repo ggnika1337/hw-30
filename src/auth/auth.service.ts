@@ -67,7 +67,7 @@ export class AuthService {
     const payLoad = {
       userId: existUser._id,
     };
-    const token = await this.jwtService.sign(payLoad, { expiresIn: '1h' });
+    const token = this.jwtService.sign(payLoad, { expiresIn: '1h' });
     return { token };
   }
 
@@ -82,7 +82,7 @@ export class AuthService {
       throw new BadRequestException('OTP Code is outdated');
     }
 
-    await this.usersService.findByIdAndUpdate(existUser._id, {
+    this.usersService.findByIdAndUpdate(existUser._id, {
       OTPCode: null,
       OTPCodeExpirationDate: null,
       isVerified: true,
@@ -91,7 +91,7 @@ export class AuthService {
     const payLoad = {
       userId: existUser._id,
     };
-    const token = await this.jwtService.sign(payLoad, { expiresIn: '1h' });
+    const token = this.jwtService.sign(payLoad, { expiresIn: '1h' });
     return { token };
   }
 

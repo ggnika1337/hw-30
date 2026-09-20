@@ -18,7 +18,7 @@ export class User {
   @Prop({ type: String })
   OTPCode: string;
 
-  @Prop({ type: Date })
+  @Prop({ type: Number })
   OTPCodeExpirationDate: number;
 
   @Prop({ type: Number })
