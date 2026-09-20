@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dtos/sign-up.dto';
 import { SignInDto } from './dtos/sign-in.dto';
@@ -6,10 +6,16 @@ import { IsAuthGuard } from 'src/guards/isAuth.guard';
 import { UserId } from 'src/users/decorators/user.decorator';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { VerifyUserDto } from './dtos/verify-user.dto';
+import { ResendVerificationCodeDto } from './dtos/resend-verification-code.dto';
+import { EmailSenderService } from 'src/email-sender/email-sender.service';
 // @UseGuards(ThrottlerGuard)
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly emailSenderService: EmailSenderService,
+  ) {}
 
   // @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Make a new account' })
@@ -28,6 +34,23 @@ export class AuthController {
   @Post('sign-in')
   signIn(@Body() { email, password }: SignInDto) {
     return this.authService.signIn({ email, password });
+  }
+
+  @ApiOperation({ summary: 'Verify account' })
+  @ApiResponse({ status: 200, description: 'Successfully verified user' })
+  @Post('verify')
+  verifyUser(@Body() { OTPCode, email }: VerifyUserDto) {
+    return this.authService.verifyEmail(email, OTPCode);
+  }
+
+  @ApiOperation({ summary: 'send verification code' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully resent code to email',
+  })
+  @Post('send')
+  resendCode(@Body() { email }: ResendVerificationCodeDto) {
+    return this.emailSenderService.resendVerificationCode(email);
   }
 
   @ApiOperation({ summary: 'Get current user' })

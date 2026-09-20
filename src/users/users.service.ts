@@ -18,9 +18,6 @@ import { AwsS3Service } from 'src/aws-s3/aws-s3.service';
 
 @Injectable()
 export class UsersService {
-  findByIdAndUpdate(_id: Types.ObjectId, arg1: { OTPCode: null; OTPCodeExpirationDate: null; isVerified: boolean; }) {
-    throw new Error('Method not implemented.');
-  }
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
@@ -123,6 +120,8 @@ export class UsersService {
     age,
     gender,
     password,
+    OTPCode,
+    OTPCodeExpirationDate,
   }: Pick<
     User,
     | 'fullName'
@@ -143,10 +142,37 @@ export class UsersService {
       age,
       gender,
       password,
+      OTPCode,
+      OTPCodeExpirationDate,
       subStart: now,
       subEnd,
       expenses: [],
     });
+  }
+
+  async updateVerificationCode(
+    email: string,
+    OTPCode: string,
+    OTPCodeExpirationDate: number,
+  ): Promise<HydratedDocument<User> | null> {
+    return this.userModel.findOneAndUpdate(
+      { email },
+      { $set: { OTPCode, OTPCodeExpirationDate } },
+      { new: true },
+    );
+  }
+
+  async markEmailVerified(
+    email: string,
+  ): Promise<HydratedDocument<User> | null> {
+    return this.userModel.findOneAndUpdate(
+      { email },
+      {
+        $set: { isVerified: true },
+        $unset: { OTPCode: 1, OTPCodeExpirationDate: 1 },
+      },
+      { new: true },
+    );
   }
 
   async sortedByGender() {

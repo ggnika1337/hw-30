@@ -5,7 +5,6 @@ import { SignInDto } from './dtos/sign-in.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { EmailSenderService } from 'src/email-sender/email-sender.service';
-import { VerifyUserDto } from './dtos/verify-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -25,10 +24,8 @@ export class AuthService {
     const hashedPassword: string = await bcrypt.hash(password, 10);
 
     // VERIFICATION
-    const otpCode = Math.random().toString().slice(2, 8);
-    const otpCodeExpirationDate = new Date().setTime(
-      new Date().getTime() + 5 * 60 * 1000,
-    );
+    const { otpCode, otpCodeExpirationDate } =
+      this.emailSenderService.createVerificationCode();
 
     await this.usersService.createAuthUser({
       email,
@@ -40,7 +37,7 @@ export class AuthService {
       OTPCodeExpirationDate: otpCodeExpirationDate,
     });
 
-    await this.emailSenderService.verifyUser(email, otpCode);
+    await this.emailSenderService.sendVerificationCode(email, otpCode);
 
     return {
       success: true,
@@ -71,28 +68,37 @@ export class AuthService {
     return { token };
   }
 
-  async verifyUser({ OTPCode, email }: VerifyUserDto) {
-    const existUser = await this.usersService.findByEmail(email, true);
-    if (!existUser) throw new BadRequestException('User not found');
+  async verifyEmail(email: string, OTPCode: string) {
+    const user = await this.usersService.findByEmail(email);
 
-    if (existUser.OTPCode !== OTPCode)
-      throw new BadRequestException('OTP Code is invalid');
-
-    if (new Date().getTime() > existUser.OTPCodeExpirationDate!) {
-      throw new BadRequestException('OTP Code is outdated');
+    if (!user || !user.OTPCode || !user.OTPCodeExpirationDate) {
+      throw new BadRequestException('Invalid verification code');
     }
 
-    this.usersService.findByIdAndUpdate(existUser._id, {
-      OTPCode: null,
-      OTPCodeExpirationDate: null,
-      isVerified: true,
-    });
+    if (user.isVerified) {
+      throw new BadRequestException('User is already verified');
+    }
 
-    const payLoad = {
-      userId: existUser._id,
+    if (user.OTPCodeExpirationDate < Date.now()) {
+      throw new BadRequestException('Verification code has expired');
+    }
+
+    if (user.OTPCode !== OTPCode) {
+      throw new BadRequestException('Invalid verification code');
+    }
+
+    await this.usersService.markEmailVerified(email);
+
+    const token = this.jwtService.sign(
+      { userId: user._id },
+      { expiresIn: '1h' },
+    );
+
+    return {
+      success: true,
+      message: 'User verified successfully',
+      token,
     };
-    const token = this.jwtService.sign(payLoad, { expiresIn: '1h' });
-    return { token };
   }
 
   async getCurrentUser(userId: string) {

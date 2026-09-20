@@ -1,56 +1,55 @@
 import { MailerService } from '@nestjs-modules/mailer';
-import { Injectable } from '@nestjs/common';
-import { SendEmailDto } from './dtos/send-email.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { randomInt } from 'crypto';
+import { UsersService } from 'src/users/users.service';
+
+const OTP_EXPIRATION_MS = 10 * 60 * 1000;
 
 @Injectable()
 export class EmailSenderService {
-  constructor(private emailService: MailerService) {}
+  constructor(
+    private readonly emailService: MailerService,
+    private readonly usersService: UsersService,
+  ) {}
 
-  async sendEmailToSomeone({ subject, text, to }: SendEmailDto) {
-    const options = {
-      to,
-      subject,
-      from: 'gamesense <bloxnick2000@gmail.com>',
-      text,
+  createVerificationCode() {
+    return {
+      otpCode: randomInt(0, 1_000_000).toString().padStart(6, '0'),
+      otpCodeExpirationDate: Date.now() + OTP_EXPIRATION_MS,
     };
-
-    await this.emailService.sendMail(options);
-    console.log('Email Sent successfully');
   }
 
-  async sendEmailToSomeonBCC(bcc: string) {
-    const options = {
-      bcc,
-      subject: 'Test',
-      from: 'gamesense <bloxnick2000@gmail.com>',
-      text: 'Random text again',
-    };
-
-    await this.emailService.sendMail(options);
-    console.log('Email Sent successfully');
-  }
-
-  async sendWelcomeMessage(to: string) {
+  async sendVerificationCode(to: string, otpCode: string) {
     const options = {
       to,
-      subject: 'Welcome',
+      subject: `${otpCode} is your gamesense verification code`,
       from: 'gamesense <bloxnick2000@gmail.com>',
-      text: 'Welcome aboard! Your account is ready. Sign in and start exploring.',
+      text: `Your verification code is ${otpCode}. It expires in 10 minutes. If you did not request it, ignore this email.`,
     };
 
     await this.emailService.sendMail(options);
-    console.log('Welcome email sent successfully');
   }
 
-  async verifyUser(to: string, OTPCode: string) {
-    const options = {
-      to,
-      subject: `${OTPCode} is your gamesense verification code`,
-      from: 'gamesense <bloxnick2000@gmail.com>',
-      text: `Your verification code is ${OTPCode}. It expires in 10 minutes. If you did not request it, ignore this email.`,
-    };
+  async resendVerificationCode(email: string) {
+    const user = await this.usersService.findByEmail(email);
 
-    await this.emailService.sendMail(options);
-    console.log('OTP email sent successfully');
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (user.isVerified) {
+      throw new BadRequestException('User is already verified');
+    }
+
+    const { otpCode, otpCodeExpirationDate } = this.createVerificationCode();
+
+    await this.usersService.updateVerificationCode(
+      email,
+      otpCode,
+      otpCodeExpirationDate,
+    );
+    await this.sendVerificationCode(email, otpCode);
+
+    return { success: true, message: 'Verification code sent successfully' };
   }
 }
